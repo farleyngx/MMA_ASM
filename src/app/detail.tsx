@@ -13,7 +13,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { CurrentMetricsGrid } from "../features/weather-display/components/CurrentMetricsGrid";
 import { ForecastList } from "../features/weather-display/components/ForecastList";
-import { ForecastListHorizontal } from "../features/weather-display/components/ForecastListHorizontal";
 import { HourlyTimeline } from "../features/weather-display/components/HourlyTimeline";
 import { InteractiveBottomSheet } from "../features/weather-display/components/InteractiveBottomSheet";
 import PressureDetailView from "../features/weather-display/components/details/PressureDetailView";
@@ -258,13 +257,14 @@ export default function DetailScreen() {
                 {/* Row 2 Metrics: Pressure & Sunset */}
                 <CurrentMetricsGrid data={weatherData} section="bottom" onPressCell={handlePressCell} />
 
-                <Text className="text-4xl font-medium text-white uppercase tracking-tighter px-5 py-8">
-                  5 Day Weather Forecast
+                <Text className="text-4xl font-medium text-white uppercase tracking-tighter px-5 py-8 ">
+                  5 Day Weather Forcast
                 </Text>
 
-                <View className="mb-8">
-                  <ForecastListHorizontal data={forecast} />
-                </View>
+                <Animated.ScrollView showsHorizontalScrollIndicator={false} className="flex-1">
+                  {/* Main Title Section */}
+                  <ForecastList data={forecast} />
+                </Animated.ScrollView>
 
               </Animated.ScrollView>
             </View>
