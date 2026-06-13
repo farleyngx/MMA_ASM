@@ -13,11 +13,18 @@ import Animated, {
 } from "react-native-reanimated";
 import { CurrentMetricsGrid } from "../features/weather-display/components/CurrentMetricsGrid";
 import { ForecastList } from "../features/weather-display/components/ForecastList";
+import { ForecastListHorizontal } from "../features/weather-display/components/ForecastListHorizontal";
 import { HourlyTimeline } from "../features/weather-display/components/HourlyTimeline";
+import { InteractiveBottomSheet } from "../features/weather-display/components/InteractiveBottomSheet";
+import PressureDetailView from "../features/weather-display/components/details/PressureDetailView";
+import SunDetailView from "../features/weather-display/components/details/SunDetailView";
+import TempDetailView from "../features/weather-display/components/details/TempDetailView";
+import WindDetailView from "../features/weather-display/components/details/WindDetailView";
 import { useWeatherData } from "../features/weather-display/hooks/useWeatherData";
 import { WeatherDataResponse } from "../types";
 
 type TabType = "current" | "forecast";
+type DetailSectionType = "temp" | "wind" | "pressure" | "sunset";
 
 export default function DetailScreen() {
   const router = useRouter();
@@ -25,6 +32,7 @@ export default function DetailScreen() {
   const [activeTab, setActiveTab] = useState<TabType>("current");
   const scrollViewRef = useRef<any>(null);
   const { width: SCREEN_WIDTH } = Dimensions.get("window");
+  const [activeDetail, setActiveDetail] = useState<DetailSectionType | null>(null);
 
   const scrollX = useSharedValue(0);
 
@@ -86,6 +94,36 @@ export default function DetailScreen() {
       </SafeAreaView>
     );
   }
+
+  // Handle opening metric details with tactile haptics
+  const handlePressCell = (type: DetailSectionType) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
+    setActiveDetail(type);
+  };
+
+  // Handle closing details sheet
+  const handleCloseDetail = () => {
+    setActiveDetail(null);
+    Haptics.selectionAsync().catch(() => { });
+  };
+
+  // Render dynamic detailed modal contents
+  const renderDetailContent = () => {
+    if (!weatherData) return null;
+    switch (activeDetail) {
+      case "temp":
+        return <TempDetailView data={weatherData} />;
+      case "wind":
+        return <WindDetailView data={weatherData} />;
+      case "pressure":
+        return <PressureDetailView data={weatherData} />;
+      case "sunset":
+        return <SunDetailView data={weatherData} />;
+      default:
+        return null;
+    }
+  };
+
 
   const isNight = weatherData?.weather[0]?.icon.endsWith("n") ?? true;
   const bgSource = isNight
@@ -210,7 +248,7 @@ export default function DetailScreen() {
                 </View>
 
                 {/* Row 1 Metrics: Temp & Wind */}
-                <CurrentMetricsGrid data={weatherData} section="top" />
+                <CurrentMetricsGrid data={weatherData} section="top" onPressCell={handlePressCell} />
 
                 {/* Middle Section: Hourly Timeline */}
                 <View className="my-2">
@@ -218,7 +256,16 @@ export default function DetailScreen() {
                 </View>
 
                 {/* Row 2 Metrics: Pressure & Sunset */}
-                <CurrentMetricsGrid data={weatherData} section="bottom" />
+                <CurrentMetricsGrid data={weatherData} section="bottom" onPressCell={handlePressCell} />
+
+                <Text className="text-4xl font-medium text-white uppercase tracking-tighter px-5 py-8">
+                  5 Day Weather Forecast
+                </Text>
+
+                <View className="mb-8">
+                  <ForecastListHorizontal data={forecast} />
+                </View>
+
               </Animated.ScrollView>
             </View>
 
@@ -237,9 +284,18 @@ export default function DetailScreen() {
                 <ForecastList data={forecast} />
               </Animated.ScrollView>
             </View>
+
+
           </Animated.ScrollView>
         )}
       </SafeAreaView>
+      {/* Reusable slide-up interactive bottom sheet */}
+      <InteractiveBottomSheet
+        isVisible={activeDetail !== null}
+        onClose={handleCloseDetail}
+      >
+        {renderDetailContent()}
+      </InteractiveBottomSheet>
     </ImageBackground>
   );
 }
